@@ -1,34 +1,36 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
+# Stage 1: Base Image for Running the Application
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 80
 EXPOSE 8081
 
-
-# This stage is used to build the service project
+# Stage 2: Build the Application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["FlipitoImageServer/FlipitoImageServer.csproj", "FlipitoImageServer/"]
-RUN dotnet restore "./FlipitoImageServer/FlipitoImageServer.csproj"
-COPY . .
-WORKDIR "/src/FlipitoImageServer"
+
+# Copy only the project file and restore dependencies
+COPY FlipitoImageServer.csproj ./ 
+RUN dotnet restore "./FlipitoImageServer.csproj"
+
+# Copy the rest of the application files
+COPY . ./
+
+# Build the project
 RUN dotnet build "./FlipitoImageServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Stage 3: Publish the Application
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./FlipitoImageServer.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Stage 4: Final Image for Running the Application
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Create the required directories
-RUN mkdir Images && mkdir Images/Business && mkdir Images/User
+# Set the application to listen on port 80
+ENV ASPNETCORE_URLS=http://+:80
 
+# Entry point for the application
 ENTRYPOINT ["dotnet", "FlipitoImageServer.dll"]

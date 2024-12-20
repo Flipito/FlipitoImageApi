@@ -10,11 +10,11 @@ public class ImagesController : ControllerBase
 
     public ImagesController(IConfiguration configuration)
     {
-        var containerName = configuration["AzureBlobStorage:ContainerName"];
-        var connectionString = configuration["AzureBlobStorage:ConnectionString"];
+        var containerName = configuration["FlipitoBlob:ContainerName"];
+        var connectionString = configuration["FlipitoBlob:BlobStorageConnection"];
 
         if (string.IsNullOrWhiteSpace(connectionString))
-            throw new ArgumentNullException("AzureBlobStorage:ConnectionString");
+            throw new ArgumentNullException("FlipitoBlob:BlobStorageConnection");
 
         var blobServiceClient = new BlobServiceClient(connectionString);
 
