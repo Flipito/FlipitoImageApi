@@ -1,0 +1,6 @@
+@FlipitoImageServer_HostAddress = http://localhost:5150
+
+GET {{FlipitoImageServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
