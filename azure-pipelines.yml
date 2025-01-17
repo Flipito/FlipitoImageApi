@@ -1,0 +1,41 @@
+trigger:
+  branches:
+    include:
+      - dev
+
+variables:
+  vmImageName: 'ubuntu-latest'
+  imageRepository: 'ghcr.io/halatao/flipitoimageserverdev'
+  tag: 'latest'
+  dockerfilePath: '$(Build.SourcesDirectory)/FlipitoImageServer/Dockerfile'
+
+stages:
+- stage: BuildAndPush
+  jobs:
+    - job: DockerBuildPush
+      pool:
+        vmImage: $(vmImageName)
+      variables:
+        - group: GHCRSecrets # This assumes you have stored your GitHub Container Registry secrets here
+      steps:
+        - checkout: self
+
+        # Login to GitHub Container Registry (GHCR)
+        - script: |
+            echo "Logging into GHCR..."
+            echo "$GITHUB_PAT" | docker login ghcr.io --username halatao --password-stdin
+          displayName: "Docker Login"
+
+        # Build the Docker image
+        - script: |
+            echo "Building Docker image..."
+            # Change the build context so that it is the FlipitoImageServer folder.
+            docker build -f $(dockerfilePath) -t $(imageRepository):$(tag) $(Build.SourcesDirectory)/FlipitoImageServer
+          displayName: "Docker Build"
+
+
+        # Push the Docker image to GHCR
+        - script: |
+            echo "Pushing Docker image..."
+            docker push $(imageRepository):$(tag)
+          displayName: "Docker Push"
