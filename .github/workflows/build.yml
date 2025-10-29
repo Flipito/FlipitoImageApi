@@ -42,5 +42,5 @@ jobs:
             -t ${{ env.IMAGE_NAMESPACE }}/flipitoimageapi:prod \
             -t ${{ env.IMAGE_NAMESPACE }}/flipitoimageapi:${{ github.sha }} \
             ./FlipitoImageServer
-          docker push ${{ env.IMAGE_NAMESPACE }}/flipitoimageserver:prod
-          docker push ${{ env.IMAGE_NAMESPACE }}/flipitoimageserver:${{ github.sha }}
+          docker push ${{ env.IMAGE_NAMESPACE }}/flipitoimageapi:prod
+          docker push ${{ env.IMAGE_NAMESPACE }}/flipitoimageapi:${{ github.sha }}
