@@ -1,6 +1,26 @@
 using FlipitoImageServer.Abstraction;
 using FlipitoImageServer.Services;
 
+static void LoadFileBackedEnvVars()
+{
+    foreach (System.Collections.DictionaryEntry e in Environment.GetEnvironmentVariables())
+    {
+        var key = e.Key?.ToString();
+        var path = e.Value?.ToString();
+        if (string.IsNullOrEmpty(key) || !key.EndsWith("__File", StringComparison.OrdinalIgnoreCase))
+            continue;
+
+        if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
+        {
+            var targetKey = key[..^"__File".Length]; // strip "__File"
+            var value = System.IO.File.ReadAllText(path).Trim();
+            Environment.SetEnvironmentVariable(targetKey, value);
+        }
+    }
+}
+
+LoadFileBackedEnvVars();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
