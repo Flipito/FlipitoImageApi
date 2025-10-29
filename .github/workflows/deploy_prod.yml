@@ -51,8 +51,8 @@ jobs:
               fi
       
               # pull & restart ONLY imageserver
-              docker compose pull flipitoimageapi
-              docker compose up -d flipitoimageapi
+              docker compose pull imageapi
+              docker compose up -d imageapi
       
               docker compose ps
           EOF
