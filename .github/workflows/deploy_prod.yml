@@ -1,0 +1,58 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ "production" ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+
+    steps:
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        env:
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+          PROD_PATH: ${{ secrets.PROD_PATH }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          : "${PROD_HOST:?missing}"; : "${PROD_USER:?missing}"; : "${PROD_PATH:?missing}"
+      
+          ssh -o StrictHostKeyChecking=yes "${PROD_USER}@${PROD_HOST}" \
+            PROD_PATH="${PROD_PATH}" GHCR_TOKEN="${GHCR_TOKEN}" \
+            bash -s <<'EOF'
+              set -euo pipefail
+              cd "$PROD_PATH"
+      
+              if [ -n "${GHCR_TOKEN:-}" ]; then
+                echo "${GHCR_TOKEN}" | docker login ghcr.io -u halatao --password-stdin
+              fi
+      
+              # pull & restart ONLY imageserver
+              docker compose pull flipitoimageapi
+              docker compose up -d flipitoimageapi
+      
+              docker compose ps
+          EOF
